@@ -34,6 +34,7 @@ class Welcome extends Component {
             <button>This button can link us to the next view</button>
           </Link>
         </center>
+        <p> DOES THIS APPEAR???</p>
       </div>
     );
   }
