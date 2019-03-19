@@ -1,0 +1,21 @@
+{
+  "name": "mkliopgv.github",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "16.8.4",
+    "react-dom": "16.8.4",
+    "react-media": "1.9.2",
+    "react-scripts": "1.1.1",
+    "react-router-dom": "4.3.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "react-scripts": "latest"
+  }
+}
