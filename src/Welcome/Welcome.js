@@ -11,30 +11,50 @@ class Welcome extends Component {
           <div className = "row">
             <div className = "col-sm-4 teststyle">
               <center>Add image here</center>
+              <center>
+
+              <p className ="imageParagraph">Image should be clickable</p>
+              </center>
               <br />
-              <h4><center>My Collection</center></h4>
+              <h4>
+              <center>
+              <Link to="/MyCollection">
+                <button type="button" className="btn btn-dark">My Collection</button>
+
+              </Link>
+              </center>
+              </h4>
             </div> 
             <div className = "col-sm-4 teststyle">
-              <center>Add image here</center>  
+              <center>Add image here</center>
+              <center>
+              <p className ="imageParagraph"> Image should be clickable</p>
+              </center>
               <br />            
               <h4><center> 
-                <Link to = "/VersusMode"><button>VS Mode</button></Link>
+              <Link to = "/VersusMode">
+                <button type="button" className="btn btn-dark">VS mode</button>
+               </Link>
               </center></h4>
             </div> 
             <div className = "col-sm-4 teststyle">
               <center>Add image here</center>
+              <center>
+              <p className ="imageParagraph"> Image should be clickable</p>
+              </center>
               <br />
-              <h4><center>Store</center></h4>
+              <h4><center>
+              <Link to="/SearchScreen">
+                <button type="button" className="btn btn-dark">Store</button>
+              </Link>
+              </center></h4>
             </div> 
           </div>
           <br />
           <br />
           <br />
-          <Link to="/SearchScreen">
-            <button>This button can link us to the next view</button>
-          </Link>
+
         </center>
-        <p> DOES THIS APPEAR???</p>
       </div>
     );
   }

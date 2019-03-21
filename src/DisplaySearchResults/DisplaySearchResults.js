@@ -49,34 +49,44 @@ class SearchResults extends Component {
     modelInstance.addCardToDeck(obj, destination);
   }
 
-
+  handleStoreCard(obj){
+    modelInstance.storeCard(obj);
+  }
 // Creates HTML containing information about the cards found in the search
 // This function could be generalized into it's own class so that it can more easily be used elsewhere
   showCard(){
     return(
       <div>
-        <table>
+        <table class ="table">
           <tbody>
             {this.state.searchResult.map((item, i) => {
-              // Due to the webserver needing a secure (https://) source we parse the insecure (http) image from
-              // our API into a webserver which returns a secure link to the image
-              let img =null;
-              if (item.img != null){
-                img = "https://images.weserv.nl/?url=" + item.img.replace("http://", "");
-              }              
-              return(
-                <tr key = {item.cardId}>
-                  <td><img src = {img} alt = {img} onError={e=>{e.target.onerror=null; e.target.src = "https://t3.ftcdn.net/jpg/01/20/55/62/500_F_120556266_mRv3efLLQlc8m3NcVJG7jAIARhBoATpn.jpg"}}/></td>
-                  <td>{"name: " + item.name}</td>
-                  <td>{"id: " + item.cardId}</td>
-                  <td>{"type: " + item.type}</td>
-                  <td>{"cost: " + item.cost}</td>
-                  <td>{"attack: " + item.attack}</td>
-                  <td>{"health: " + item.health}</td>
-                  <td><button onClick = {() => this.handleClickOnCard(item, "user")}>Add to user</button></td>
-                  <td><button onClick = {() => this.handleClickOnCard(item, "opponent")}>Add to opponent</button></td>
-                </tr>
-              );
+              // if the card is valid we return information about it 
+              if (item.name !== undefined & item.img !== undefined & item.health !== undefined & item.attack !== undefined & item.cost !== undefined) {
+                let img =null;
+                // Due to the webserver needing a secure (https://) source we parse the insecure (http) image from
+                // our API into a webserver which returns a secure link to the image
+                if (item.img != null){
+                  img = "https://images.weserv.nl/?url=" + item.img.replace("http://", "");
+                }              
+                return(
+                  <tr key = {item.cardId}>
+                    <td class="align-middle"><img src = {img} alt = {img} onError={e=>{e.target.onerror=null; e.target.src = "https://t3.ftcdn.net/jpg/01/20/55/62/500_F_120556266_mRv3efLLQlc8m3NcVJG7jAIARhBoATpn.jpg"}}/></td>
+                    <td class="align-middle">{"name: " + item.name}</td>
+                    <td class="align-middle">{"id: " + item.cardId}</td>
+                    <td class="align-middle">{"type: " + item.type}</td>
+                    <td class="align-middle">{"cost: " + item.cost}</td>
+                    <td class="align-middle">{"attack: " + item.attack}</td>
+                    <td class="align-middle">{"health: " + item.health}</td>
+                    <td class="align-middle"><button onClick = {() => this.handleClickOnCard(item, "user")}>Add to user</button></td>
+                    <td class="align-middle"><button onClick = {() => this.handleClickOnCard(item, "opponent")}>Add to opponent</button></td>
+                    <td class="align-middle"><Link to = "/storeDetail"><button onClick = {() => this.handleStoreCard(item)}>View this card</button></Link></td>
+                  </tr>
+                );
+              }
+              else{
+                // if the card isn't valid we don't want to show anything
+                return false;
+              }
             })}
           </tbody>
         </table>

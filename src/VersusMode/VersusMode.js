@@ -1,52 +1,66 @@
 import React, { Component } from "react";
 import modelInstance from "../data/Model.js";
 import { Link } from "react-router-dom";
+import "./VersusMode.css";
 
 // A place to try out the gaming stuff
 // currently only displays the cards in the users and the AI opponents decks
 class VersusMode extends Component{
 	
+	// To make sure we don't delete stuff from the users collection when the cards die
+	// we need to use a copy of the cards, not a reference.
+	// Therefore we use the JSON.parse(JSON.stringify(array))
+	// credit goes to https://stackoverflow.com/questions/9885821/copying-of-an-array-of-objects-to-another-array-without-object-reference-in-java 
 	constructor(props){
 		super(props);
 		this.state = {
-			usersCards:modelInstance.getUsersCards(),
-			opponentsCards:modelInstance.getOpponentsCards(),
+			usersCards:JSON.parse(JSON.stringify(modelInstance.getUsersCards())),
+			opponentsCards:JSON.parse(JSON.stringify(modelInstance.getOpponentsCards())),
+			history:[],
 		};
 	}
 
-
-	cardInfo(obj){
-		let img =null;
-      	if (obj.img != null){
-        	img = "https://images.weserv.nl/?url=" + obj.img.replace("http://", "");
-      	}
-		return (
-			<div key = {obj.id}>
-				<table>
-					<tbody>
-						<tr>
-							<td>
-								{/*<img src = {img} alt = {img}/>*/}
-								<p>{obj.name}</p>
-							</td>
-							<td>
-								<p>Health: {obj.health}</p>
-								<p>Attack: {obj.attack}</p>
-								<p>Cost: {obj.cost}</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			);
+	// When this component is instaniated we add it to the list of observers in the model
+	componentDidMount(){
+		modelInstance.addObserver(this);
 	}
 
+	// this will be called when the model calls "notifyObservers()"
+	update(){
+		this.setState({
+			usersCards:JSON.parse(JSON.stringify(modelInstance.getUsersCards())),
+			opponentsCards:JSON.parse(JSON.stringify(modelInstance.getOpponentsCards())),
+		});
+	}
+
+	// Displays information about a specific card
+	cardInfo(obj){
+		// let img = null;
+  //     	if (obj.img != null){
+  //       	img = "https://images.weserv.nl/?url=" + obj.img.replace("http://", "");
+  //     	}
+		return (			
+			<tr key = {obj.cardId}>
+				<td>
+					{/*<img src = {img} alt = {img}/>*/}
+					<p>{obj.name}</p>
+				</td>
+				<td>
+					<p>Health: {obj.health}</p>
+					<p>Attack: {obj.attack}</p>
+					<p>Cost: {obj.cost}</p>
+				</td>
+			</tr>
+		);
+	}
+
+	// Displays all cards for either the user or the opponent AI
 	displayAllCards(owner){
 		let cards = null;
-		if (owner == "user") {
+		if (owner === "user") {
 			cards = this.state.usersCards;
 		}
-		else if (owner == "opponent"){
+		else if (owner === "opponent"){
 			cards = this.state.opponentsCards;
 		}
 		else{
@@ -57,9 +71,13 @@ class VersusMode extends Component{
 		}
 		return (
 				<div>
-					{cards.map((item, i)=>{
-						return this.cardInfo(item);
-					})}
+					<table className = " table table-bordered ">
+						<tbody>
+							{cards.map((item, i)=>{
+								return this.cardInfo(item);
+							})}
+						</tbody>
+					</table>
 				</div>
 			);
 	}
@@ -67,50 +85,89 @@ class VersusMode extends Component{
 	// Checks for what cards the user and opponent has
 	// takes the first card from each deck and pits them against each other
 	// basically subtracts the attack no. from the health attribute and updates the object
-	// If a card is detected as dead (<0 hp) it is removed from the deck permanently
+	// If a card is detected as dead (<0 hp) it is removed from the deck
 	// maybe have this in the model instead? idk
 	fight(){
 		let usersCards = this.state.usersCards;
 		let opponentsCards = this.state.opponentsCards;
-
-		if (usersCards != undefined & opponentsCards != undefined & usersCards.length>0 & opponentsCards.length>0 ) {
+		let history = this.state.history;
+		if (usersCards !== undefined & opponentsCards !== undefined & usersCards.length>0 & opponentsCards.length>0 ) {
 			let usersCurrent = usersCards[0];
 			let opponentsCurrent = opponentsCards[0];
 			usersCurrent.health -= opponentsCurrent.attack;
 			opponentsCurrent.health -= usersCurrent.attack;
-			console.log("users " + usersCurrent.name + " attacked " + opponentsCurrent.name + " for " + usersCurrent.attack + " damage" );
-			console.log("opponents " + opponentsCurrent.name + " attacked " + usersCurrent.name + " for " + opponentsCurrent.attack + " damage");
+			let userInfo = "users " + usersCurrent.name + " attacked " + opponentsCurrent.name + " for " + usersCurrent.attack + " damage";
+			let opponentInfo = "opponents " + opponentsCurrent.name + " attacked " + usersCurrent.name + " for " + opponentsCurrent.attack + " damage";
+			history.push(userInfo);
+			history.push(opponentInfo);
 			if (usersCurrent.health <= 0) {
 				usersCards.shift();
-				console.log("users " + usersCurrent.name + " died!");
+				history.push("users " + usersCurrent.name + " died!");
 			}
 			if (opponentsCurrent.health <= 0) {
 				opponentsCards.shift();
-				console.log("opponents " + opponentsCurrent.name + " died!");
+				history.push("opponents " + opponentsCurrent.name + " died!");
 			}
 			this.setState({
 				usersCards:usersCards,
 				opponentsCards:opponentsCards,
+				history:history,
 			});
 		}
 	}
+
+
+	// this method tells the model to perform a query for cards of a certain quality
+	// it then tells the model to select a few cards from there at random
+	// which it then tells the model to add to the opponents deck
+	addCardsToOpponent(quality){
+		modelInstance.searchDeckByQuality(quality)
+			.then((result) => modelInstance.selectRandomCardsForOpponent(result))
+				.then((result) => {
+					for (var i = result.length - 1; i >= 0; i--) {
+						modelInstance.addCardToDeck(result[i], "opponent");
+					}
+				})
+	}
+
 
 	render(){
 		return (
 				<div>
 					<Link to = "/"><button>Go back</button></Link>
-					<div className = "row">
-						<div className = "col-sm-5">
-							<h1>Users cards </h1>
-							{this.displayAllCards("user")}
-						</div>
-						<div className = "col-sm-5">
-							<h1>AI opponents cards</h1>
-							{this.displayAllCards("opponent")}
-						</div>
-					</div>
+					<button onClick = {() => this.fight()}>Fight</button>	
+					<button onClick = {() => this.addCardsToOpponent("Free")}>Add Free cards to opponent</button>
+					<button onClick = {() => this.addCardsToOpponent("Common")}>Add Common cards to opponent</button>
+					<button onClick = {() => this.addCardsToOpponent("Rare")}>Add Rare cards to opponent</button>
+					<button onClick = {() => this.addCardsToOpponent("Epic")}>Add Epic cards to opponent</button>
+					<button onClick = {() => this.addCardsToOpponent("Legendary")}>Add Legendary cards to opponent</button>
+					<button onClick = {() => modelInstance.clearOpponentsCards()}>Clear the opponents deck</button>
 					<div>
-						<button onClick = {() => this.fight()}>Fight</button>
+						{/* I want this to take up more height even when it is empty. idk how though, at least without using px */}
+						<div className = "row border border-dark " id = "cardInfo">
+							<div className = "col-sm-5">
+								<h1>Users cards </h1>
+								{this.displayAllCards("user")}
+							</div>
+							<div className = "col-sm-5" id = "opponentsCards">
+								<h1 id = "opponentHeader">AI opponents cards</h1>
+								{this.displayAllCards("opponent")}
+							</div>
+						</div>
+						<hr/>
+
+					{/* This will be made scrollable via css
+						need to make it so that the scrollbar is focused to the bottom automatically. implement:
+						https://stackoverflow.com/questions/18614301/keep-overflow-div-scrolled-to-bottom-unless-user-scrolls-up/21067431
+						or this https://stackoverflow.com/questions/40336311/how-can-i-make-a-scrollable-component-that-scrolls-to-the-latest-children-compon
+					 */}
+						<div id = "gameResult">
+								{this.state.history.map((item, i)=> {
+							
+								return <p>{item}</p>}
+							)}
+							
+						</div>
 					</div>
 				</div>
 			);
